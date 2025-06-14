@@ -1,9 +1,9 @@
 # SABCOM 
 
-[![Coverage Status][codecov-image]][codecov-url]
 [![Github Build Status][github-image]][github-url]
 [![NPM version][npm-image]][npm-url]
 [![Downloads][downloads-image]][npm-url]
+[![Coverage Status][codecov-image]][codecov-url]
 [![Snyk][snyk-image]][snyk-url]
 
 A TypeScript/Node.js library for inter-thread communication using SharedArrayBuffer with atomic operations and V8 serialization.
