@@ -1,7 +1,7 @@
 {
   "name": "sabcom",
   "version": "0.0.1",
-  "description": "",
+  "description": "A TypeScript/Node.js library for inter-thread communication using SharedArrayBuffer with atomic operations and V8 serialization",
   "type": "module",
   "types": "build/index.d.ts",
   "main": "build/index.cjs",
@@ -19,7 +19,20 @@
     "lint": "eslint src",
     "test": "jest"
   },
-  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/3axap4eHko/sabcom.git"
+  },
+  "keywords": [
+    "SharedArrayBuffer",
+    "shared",
+    "atomic",
+    "buffer",
+    "thread",
+    "worker",
+    "communication"
+  ],
+  "license": "MIT",
   "author": {
     "name": "Ivan Zakharchanka",
     "email": "3axap4eHko@gmail.com",
