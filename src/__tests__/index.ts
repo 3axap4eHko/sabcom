@@ -1,10 +1,16 @@
 import { serialize } from 'node:v8';
-import { read, write, SEMAPHORE, HEADER_SIZE, Semaphore, Handshake, Header } from '../index';
+import { read, write, SEMAPHORE, HEADER_VALUES, HEADER_SIZE, Semaphore, Handshake, Header } from '../index';
 
 describe('sabsync test suite', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.restoreAllMocks();
+  });
+
+  it('should have correct header size', () => {
+    const handshakeValues = Object.values(Handshake).filter(v => typeof v === 'number').length;
+    const headerValues = Object.values(Header).filter(v => typeof v === 'number').length;
+    expect(1 + Math.max(handshakeValues, headerValues)).toEqual(HEADER_VALUES);
   });
 
   it('should write data', async () => {
@@ -109,7 +115,7 @@ describe('sabsync test suite', () => {
       const wait = jest.spyOn(Atomics, 'wait');
       wait.mockReturnValue('timed-out');
 
-      expect(() => write({ test: 'data' }, buffer, 100)).toThrow('Reader handshake timeout');
+      expect(() => write({ test: 'data' }, buffer, { timeout: 100 })).toThrow('Reader handshake timeout');
     });
 
     it('should throw on reader timeout for chunk', () => {
@@ -119,7 +125,7 @@ describe('sabsync test suite', () => {
       wait.mockReturnValueOnce('ok');
       wait.mockReturnValueOnce('timed-out');
 
-      expect(() => write({ test: 'data' }, buffer, 100)).toThrow('Reader timeout on chunk 0/0');
+      expect(() => write({ test: 'data' }, buffer, { timeout: 100 })).toThrow('Reader timeout on chunk 0/0');
     });
 
     it('should reset semaphore to READY on error', () => {
@@ -131,7 +137,7 @@ describe('sabsync test suite', () => {
       wait.mockReturnValue('timed-out');
 
       try {
-        write({ test: 'data' }, buffer, 100);
+        write({ test: 'data' }, buffer, { timeout: 100 });
       } catch {
         // ignore
       }
@@ -146,7 +152,7 @@ describe('sabsync test suite', () => {
       const wait = jest.spyOn(Atomics, 'wait');
       wait.mockReturnValue('timed-out');
 
-      expect(() => read(buffer, 100)).toThrow('Handshake timeout');
+      expect(() => read(buffer, { timeout: 100 })).toThrow('Handshake timeout');
     });
 
     it('should throw on invalid handshake state', () => {
@@ -171,7 +177,7 @@ describe('sabsync test suite', () => {
       wait.mockReturnValueOnce('ok');
       wait.mockReturnValueOnce('timed-out');
 
-      expect(() => read(buffer, 100)).toThrow('Writer timeout waiting for chunk 0');
+      expect(() => read(buffer, { timeout: 100 })).toThrow('Writer timeout waiting for chunk 0');
     });
 
     it('should throw when expected payload header is wrong', () => {
@@ -233,7 +239,7 @@ describe('sabsync test suite', () => {
       wait.mockReturnValueOnce('ok');
       wait.mockReturnValueOnce('timed-out');
 
-      expect(() => write(data, buffer, 100)).toThrow(/Reader timeout on chunk 1\/\d+/);
+      expect(() => write(data, buffer, { timeout: 100 })).toThrow(/Reader timeout on chunk 1\/\d+/);
     });
   });
 });

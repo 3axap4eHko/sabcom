@@ -24,10 +24,14 @@ export const HEADER_VALUES =
   Math.max(Object.values(Handshake).length, Object.values(Header).length) / 2;
 export const HEADER_SIZE = Uint32Array.BYTES_PER_ELEMENT * HEADER_VALUES;
 
+export interface Options {
+  timeout?: number;
+}
+
 export const write = (
   data: unknown,
   buffer: SharedArrayBuffer,
-  timeout = 5000,
+  { timeout = 5000 }: Options = {}
 ) => {
   const serialized = serialize(data);
   const chunkSize = buffer.byteLength - HEADER_SIZE;
@@ -77,7 +81,9 @@ export const write = (
   }
 };
 
-export const read = (buffer: SharedArrayBuffer, timeout = 5000): unknown => {
+export const read = (buffer: SharedArrayBuffer,
+  { timeout = 5000 }: Options = {}
+): unknown => {
   const header = new Int32Array(buffer);
   if (
     Atomics.wait(header, SEMAPHORE, Semaphore.READY, timeout) === "timed-out"
