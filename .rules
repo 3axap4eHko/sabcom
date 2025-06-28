@@ -6,3 +6,4 @@
 * Use meaningful variable and function names.
 * Follow the Airbnb JavaScript Style Guide.
 * All @types must be installed as dev dependencies.
+* Test the unique behavior of each function by mocking its internal dependencies rather than retesting already-covered functionality.
