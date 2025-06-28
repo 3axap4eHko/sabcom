@@ -11,10 +11,12 @@ A TypeScript/Node.js library for inter-thread communication using SharedArrayBuf
 ## Features
 
 - **Thread-safe communication** using atomic operations
+- **Async and sync APIs** for different use cases
 - **Chunked data transfer** for large payloads
 - **V8 serialization** for complex data types
 - **Timeout handling** with configurable timeouts
 - **Zero-copy operations** where possible
+- **Generator-based** low-level API for custom implementations
 
 ## Installation
 
@@ -24,7 +26,7 @@ npm install sabcom
 
 ## Usage
 
-### Basic Example
+### Async Example
 
 ```typescript
 import { write, read } from 'sabcom';
@@ -32,47 +34,121 @@ import { write, read } from 'sabcom';
 // Create a shared buffer (1MB)
 const buffer = new SharedArrayBuffer(1024 * 1024);
 
-// Writer thread
+// Writer thread (async)
 const data = { message: 'Hello World', numbers: [1, 2, 3, 4, 5] };
-write(data, buffer);
+await write(data, buffer);
 
-// Reader thread
-const received = read(buffer);
+// Reader thread (async)
+const received = await read(buffer);
 console.log(received); // { message: 'Hello World', numbers: [1, 2, 3, 4, 5] }
+```
+
+### Sync Example
+
+```typescript
+import { writeSync, readSync } from 'sabcom';
+
+// Writer thread (sync)
+writeSync(data, buffer);
+
+// Reader thread (sync)
+const received = readSync(buffer);
 ```
 
 ### With Custom Timeout
 
 ```typescript
 // 10 second timeout
-write(data, buffer, 10000);
-const received = read(buffer, 10000);
+await write(data, buffer, { timeout: 10000 });
+const received = await read(buffer, { timeout: 10000 });
+
+// Sync with timeout
+writeSync(data, buffer, { timeout: 10000 });
+const received = readSync(buffer, { timeout: 10000 });
 ```
 
 ## API Reference
 
-### `write(data: unknown, buffer: SharedArrayBuffer, timeout?: number): void`
+### Async Functions
 
-Writes data to the shared buffer using chunked transfer.
+#### `write(data: unknown, buffer: SharedArrayBuffer, options?: Options): Promise<void>`
+
+Asynchronously writes data to the shared buffer using chunked transfer.
 
 - `data` - Any serializable data
 - `buffer` - SharedArrayBuffer for communication
-- `timeout` - Timeout in milliseconds (default: 5000)
+- `options` - Optional configuration object
+  - `timeout` - Timeout in milliseconds (default: 5000)
 
 **Throws:**
 - `Error` - On handshake or chunk timeout
 
-### `read(buffer: SharedArrayBuffer, timeout?: number): unknown`
+#### `read(buffer: SharedArrayBuffer, options?: Options): Promise<unknown>`
 
-Reads data from the shared buffer.
+Asynchronously reads data from the shared buffer.
 
 - `buffer` - SharedArrayBuffer for communication
-- `timeout` - Timeout in milliseconds (default: 5000)
+- `options` - Optional configuration object
+  - `timeout` - Timeout in milliseconds (default: 5000)
+
+**Returns:** Promise resolving to deserialized data
+
+**Throws:**
+- `Error` - On timeout or integrity failure
+
+### Sync Functions
+
+#### `writeSync(data: unknown, buffer: SharedArrayBuffer, options?: Options): void`
+
+Synchronously writes data to the shared buffer using chunked transfer.
+
+- `data` - Any serializable data
+- `buffer` - SharedArrayBuffer for communication
+- `options` - Optional configuration object
+  - `timeout` - Timeout in milliseconds (default: 5000)
+
+**Throws:**
+- `Error` - On handshake or chunk timeout
+
+#### `readSync(buffer: SharedArrayBuffer, options?: Options): unknown`
+
+Synchronously reads data from the shared buffer.
+
+- `buffer` - SharedArrayBuffer for communication
+- `options` - Optional configuration object
+  - `timeout` - Timeout in milliseconds (default: 5000)
 
 **Returns:** Deserialized data
 
 **Throws:**
 - `Error` - On timeout or integrity failure
+
+### Low-level Generator Functions
+
+#### `writeGenerator(data: unknown, buffer: SharedArrayBuffer, options?: Options): Generator<WaitRequest, void, WaitResponse>`
+
+Generator function for custom write implementations.
+
+#### `readGenerator(buffer: SharedArrayBuffer, options?: Options): Generator<WaitRequest, unknown, WaitResponse>`
+
+Generator function for custom read implementations.
+
+### Types
+
+```typescript
+interface Options {
+  timeout?: number;
+}
+
+interface WaitRequest {
+  target: Int32Array;
+  index: number;
+  value: number;
+  timeout?: number;
+}
+
+type WaitResponse = ReturnType<typeof Atomics.wait>;
+```
 
 ## Protocol
 
@@ -97,7 +173,10 @@ The library uses a header-based protocol with atomic operations:
 
 ## Thread Safety
 
-Uses `Atomics.wait()`, `Atomics.notify()`, and `Atomics.store()` for synchronization. Requires SharedArrayBuffer support and proper threading context.
+- **Async functions** (`write`, `read`) use `Atomics.waitAsync()` for non-blocking operations
+- **Sync functions** (`writeSync`, `readSync`) use `Atomics.wait()` for blocking operations  
+- All functions use `Atomics.store()` and `Atomics.notify()` for synchronization
+- Requires SharedArrayBuffer support and proper threading context
 
 ## Requirements
 
