@@ -1,4 +1,4 @@
-# SABCOM 
+# SABCOM
 
 [![Github Build Status][github-image]][github-url]
 [![NPM version][npm-image]][npm-url]
@@ -66,7 +66,7 @@ Writes data to the shared buffer using chunked transfer.
 
 Reads data from the shared buffer.
 
-- `buffer` - SharedArrayBuffer for communication  
+- `buffer` - SharedArrayBuffer for communication
 - `timeout` - Timeout in milliseconds (default: 5000)
 
 **Returns:** Deserialized data
@@ -91,7 +91,7 @@ The library uses a header-based protocol with atomic operations:
 ## Error Handling
 
 - **Handshake timeout** - Reader not ready within timeout
-- **Chunk timeout** - Individual chunk transfer timeout  
+- **Chunk timeout** - Individual chunk transfer timeout
 - **Integrity failure** - Chunk index mismatch
 - **Invalid state** - Unexpected semaphore state
 
@@ -108,7 +108,7 @@ Uses `Atomics.wait()`, `Atomics.notify()`, and `Atomics.store()` for synchroniza
 
 ## License
 
-License [The MIT License](./LICENSE)
+License [Apache-2.0](./LICENSE)
 Copyright (c) 2025 Ivan Zakharchanka
 
 [npm-url]: https://www.npmjs.com/package/sabcom

@@ -1,10 +1,9 @@
-.idea
+.cache
+.temp
 build
 coverage
 node_modules
-*.log*
-yaee.js
-.cache
-.temp
 docs/.vuepress/dist
+codecov*
+*.log*
 *.tmp.*

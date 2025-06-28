@@ -11,12 +11,6 @@
     "rootDir": "src",
     "outDir": "build"
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "**/__tests__",
-    "node_modules",
-    "**/*.tmp.ts"
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "**/__tests__", "**/*.tmp.ts"]
 }

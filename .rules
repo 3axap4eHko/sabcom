@@ -1,0 +1,8 @@
+# Typescript coding guidelines
+
+* Prioritize code correctness and clarity. Use the most semantically appropriate data structures and methods, even when more efficient, as long as readability is maintained.
+* Do not write organizational or comments that summarize the code. Comments should only be written in order to explain "why" the code is written in some way in the case there is a reason that is tricky / non-obvious.
+* Prefer implementing functionality in existing files unless it is a new logical component. Avoid creating many small files.
+* Use meaningful variable and function names.
+* Follow the Airbnb JavaScript Style Guide.
+* All @types must be installed as dev dependencies.
