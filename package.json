@@ -1,7 +1,7 @@
 {
   "name": "sabcom",
-  "version": "0.0.25",
-  "description": "A TypeScript/Node.js library for inter-thread communication using SharedArrayBuffer with atomic operations and V8 serialization",
+  "version": "0.0.27",
+  "description": "A TypeScript/Node.js library for inter-thread communication using SharedArrayBuffer with atomic operations for raw buffer data transfer",
   "type": "module",
   "types": "build/index.d.ts",
   "main": "build/index.cjs",
@@ -37,8 +37,6 @@
     "multithreading",
     "ipc",
     "inter-process",
-    "v8",
-    "serialization",
     "synchronization",
     "memory"
   ],

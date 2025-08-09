@@ -1,4 +1,3 @@
-import { serialize } from "node:v8";
 import { vi } from "vitest";
 import {
   readGenerator,
@@ -38,7 +37,7 @@ describe("sabcom test suite", () => {
   describe("writeGenerator", () => {
     it("should yield handshake wait request first", () => {
       const capacity = 1024;
-      const data = { foo: "bar" };
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(capacity);
       const header = new Int32Array(buffer);
 
@@ -60,7 +59,7 @@ describe("sabcom test suite", () => {
 
     it("should yield payload wait request after handshake", () => {
       const capacity = 1024;
-      const data = { foo: "bar" };
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(capacity);
       const header = new Int32Array(buffer);
 
@@ -86,7 +85,7 @@ describe("sabcom test suite", () => {
 
     it("should complete after payload acknowledgment", () => {
       const capacity = 1024;
-      const data = { foo: "bar" };
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(capacity);
 
       const gen = writeGenerator(data, buffer);
@@ -101,7 +100,7 @@ describe("sabcom test suite", () => {
 
     it("should throw on handshake timeout", () => {
       const capacity = 1024;
-      const data = { foo: "bar" };
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(capacity);
 
       const gen = writeGenerator(data, buffer);
@@ -112,7 +111,7 @@ describe("sabcom test suite", () => {
 
     it("should throw on payload timeout", () => {
       const capacity = 1024;
-      const data = { foo: "bar" };
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(capacity);
 
       const gen = writeGenerator(data, buffer);
@@ -126,7 +125,7 @@ describe("sabcom test suite", () => {
 
     it("should reset semaphore to READY on completion", () => {
       const capacity = 1024;
-      const data = { foo: "bar" };
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(capacity);
       const header = new Int32Array(buffer);
 
@@ -143,12 +142,12 @@ describe("sabcom test suite", () => {
       const buffer = new SharedArrayBuffer(bufferSize);
       const header = new Int32Array(buffer);
 
-      const data = {
-        test: "hello world test data that is longer than chunk size",
-      };
-      const serialized = serialize(data);
+      const data = new Uint8Array(50); // Create data larger than chunk size
+      for (let i = 0; i < data.length; i++) {
+        data[i] = i;
+      }
       const chunkSize = bufferSize - HEADER_SIZE;
-      const expectedChunks = Math.ceil(serialized.length / chunkSize);
+      const expectedChunks = Math.ceil(data.length / chunkSize);
 
       const gen = writeGenerator(data, buffer);
 
@@ -208,8 +207,7 @@ describe("sabcom test suite", () => {
 
     it("should yield chunk wait requests and return data", () => {
       const capacity = 1024;
-      const data = { foo: "bar", num: 42 };
-      const serialized = serialize(data);
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(capacity);
       const header = new Int32Array(buffer);
       const payload = new Uint8Array(buffer, HEADER_SIZE);
@@ -220,9 +218,9 @@ describe("sabcom test suite", () => {
       expect(handshakeResult.done).toBe(false);
 
       header[SEMAPHORE] = Semaphore.HANDSHAKE;
-      header[Handshake.TOTAL_SIZE] = serialized.length;
+      header[Handshake.TOTAL_SIZE] = data.length;
       header[Handshake.TOTAL_CHUNKS] = 1;
-      payload.set(serialized, 0);
+      payload.set(data, 0);
 
       const chunkResult = gen.next("ok");
       expect(chunkResult.done).toBe(false);
@@ -231,7 +229,7 @@ describe("sabcom test suite", () => {
       header[SEMAPHORE] = Semaphore.PAYLOAD;
       header[Header.CHUNK_INDEX] = 0;
       header[Header.CHUNK_OFFSET] = 0;
-      header[Header.CHUNK_SIZE] = serialized.length;
+      header[Header.CHUNK_SIZE] = data.length;
 
       const finalResult = gen.next("ok");
       expect(finalResult.done).toBe(true);
@@ -311,7 +309,7 @@ describe("sabcom test suite", () => {
         .spyOn(Atomics, "waitAsync")
         .mockImplementation(() => ({ value: mockWaitAsync() }));
 
-      const data = { test: "small" };
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(1024);
 
       const writePromise = write(data, buffer);
@@ -343,7 +341,7 @@ describe("sabcom test suite", () => {
         value: mockWaitAsync(),
       }));
 
-      const data = { test: "data" };
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(1024);
       const options = { timeout: 1000 };
 
@@ -373,7 +371,7 @@ describe("sabcom test suite", () => {
         .mockReturnValueOnce("ok");
       const waitSpy = vi.spyOn(Atomics, "wait").mockImplementation(mockWait);
 
-      const data = { test: "small" };
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(1024);
 
       setTimeout(() => {
@@ -401,7 +399,7 @@ describe("sabcom test suite", () => {
         .mockReturnValueOnce("ok");
       vi.spyOn(Atomics, "wait").mockImplementation(mockWait);
 
-      const data = { test: "data" };
+      const data = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(1024);
       const options = { timeout: 1000 };
 
@@ -422,13 +420,11 @@ describe("sabcom test suite", () => {
   });
 
   describe("readSync", () => {
-    it("should use Atomics.wait and return deserialized data", () => {
-      const testData = { foo: "bar", num: 42 };
+    it("should use Atomics.wait and return buffer data", () => {
+      const testData = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(1024);
       const header = new Int32Array(buffer);
       const payload = new Uint8Array(buffer, HEADER_SIZE);
-
-      const serialized = serialize(testData);
 
       // Simulate handshake response from writer
       let waitCallCount = 0;
@@ -437,16 +433,16 @@ describe("sabcom test suite", () => {
         if (waitCallCount === 1) {
           // After first wait, set up handshake
           header[SEMAPHORE] = Semaphore.HANDSHAKE;
-          header[Handshake.TOTAL_SIZE] = serialized.length;
+          header[Handshake.TOTAL_SIZE] = testData.length;
           header[Handshake.TOTAL_CHUNKS] = 1;
-          payload.set(serialized, 0);
+          payload.set(testData, 0);
           return "ok";
         } else if (waitCallCount === 2) {
           // After second wait, set up payload
           header[SEMAPHORE] = Semaphore.PAYLOAD;
           header[Header.CHUNK_INDEX] = 0;
           header[Header.CHUNK_OFFSET] = 0;
-          header[Header.CHUNK_SIZE] = serialized.length;
+          header[Header.CHUNK_SIZE] = testData.length;
           return "ok";
         }
         return "ok";
@@ -461,27 +457,25 @@ describe("sabcom test suite", () => {
     });
 
     it("should accept options parameter", () => {
-      const testData = { test: "data" };
+      const testData = new Uint8Array([1, 2, 3, 4, 5]);
       const buffer = new SharedArrayBuffer(1024);
       const header = new Int32Array(buffer);
       const payload = new Uint8Array(buffer, HEADER_SIZE);
-
-      const serialized = serialize(testData);
 
       let waitCallCount = 0;
       const mockWait = vi.fn().mockImplementation(() => {
         waitCallCount++;
         if (waitCallCount === 1) {
           header[SEMAPHORE] = Semaphore.HANDSHAKE;
-          header[Handshake.TOTAL_SIZE] = serialized.length;
+          header[Handshake.TOTAL_SIZE] = testData.length;
           header[Handshake.TOTAL_CHUNKS] = 1;
-          payload.set(serialized, 0);
+          payload.set(testData, 0);
           return "ok";
         } else if (waitCallCount === 2) {
           header[SEMAPHORE] = Semaphore.PAYLOAD;
           header[Header.CHUNK_INDEX] = 0;
           header[Header.CHUNK_OFFSET] = 0;
-          header[Header.CHUNK_SIZE] = serialized.length;
+          header[Header.CHUNK_SIZE] = testData.length;
           return "ok";
         }
         return "ok";
@@ -497,8 +491,8 @@ describe("sabcom test suite", () => {
   });
 
   describe("read", () => {
-    it("should use Atomics.waitAsync and return deserialized data", async () => {
-      const testData = { foo: "bar", num: 42 };
+    it("should use Atomics.waitAsync and return buffer data", async () => {
+      const testData = new Uint8Array([1, 2, 3, 4, 5]);
       const mockWaitAsync = vi.fn();
       vi.spyOn(Atomics, "waitAsync").mockImplementation(() => ({
         value: mockWaitAsync(),
@@ -508,24 +502,22 @@ describe("sabcom test suite", () => {
       const header = new Int32Array(buffer);
       const payload = new Uint8Array(buffer, HEADER_SIZE);
 
-      const serialized = serialize(testData);
-
       let waitCallCount = 0;
       mockWaitAsync.mockImplementation(async () => {
         waitCallCount++;
         if (waitCallCount === 1) {
           // After first wait, set up handshake
           header[SEMAPHORE] = Semaphore.HANDSHAKE;
-          header[Handshake.TOTAL_SIZE] = serialized.length;
+          header[Handshake.TOTAL_SIZE] = testData.length;
           header[Handshake.TOTAL_CHUNKS] = 1;
-          payload.set(serialized, 0);
+          payload.set(testData, 0);
           return "ok";
         } else if (waitCallCount === 2) {
           // After second wait, set up payload
           header[SEMAPHORE] = Semaphore.PAYLOAD;
           header[Header.CHUNK_INDEX] = 0;
           header[Header.CHUNK_OFFSET] = 0;
-          header[Header.CHUNK_SIZE] = serialized.length;
+          header[Header.CHUNK_SIZE] = testData.length;
           return "ok";
         }
         return "ok";
@@ -538,7 +530,7 @@ describe("sabcom test suite", () => {
     });
 
     it("should accept options parameter", async () => {
-      const testData = { test: "async" };
+      const testData = new Uint8Array([1, 2, 3, 4, 5]);
       const mockWaitAsync = vi.fn();
       vi.spyOn(Atomics, "waitAsync").mockImplementation(() => ({
         value: mockWaitAsync(),
@@ -548,7 +540,6 @@ describe("sabcom test suite", () => {
       const header = new Int32Array(buffer);
       const payload = new Uint8Array(buffer, HEADER_SIZE);
 
-      const serialized = serialize(testData);
       const options = { timeout: 1000 };
 
       let waitCallCount = 0;
@@ -556,15 +547,15 @@ describe("sabcom test suite", () => {
         waitCallCount++;
         if (waitCallCount === 1) {
           header[SEMAPHORE] = Semaphore.HANDSHAKE;
-          header[Handshake.TOTAL_SIZE] = serialized.length;
+          header[Handshake.TOTAL_SIZE] = testData.length;
           header[Handshake.TOTAL_CHUNKS] = 1;
-          payload.set(serialized, 0);
+          payload.set(testData, 0);
           return "ok";
         } else if (waitCallCount === 2) {
           header[SEMAPHORE] = Semaphore.PAYLOAD;
           header[Header.CHUNK_INDEX] = 0;
           header[Header.CHUNK_OFFSET] = 0;
-          header[Header.CHUNK_SIZE] = serialized.length;
+          header[Header.CHUNK_SIZE] = testData.length;
           return "ok";
         }
         return "ok";
