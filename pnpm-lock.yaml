@@ -36,8 +36,8 @@ importers:
         specifier: ^9.1.7
         version: 9.1.7
       inop:
-        specifier: ^0.7.15
-        version: 0.7.15
+        specifier: ^0.7.16
+        version: 0.7.16
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -917,8 +917,8 @@ packages:
     resolution: {integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==}
     engines: {node: '>=0.8.19'}
 
-  inop@0.7.15:
-    resolution: {integrity: sha512-qiqDmZPVvDsMky0voyOKlNc3behT0OTxNGRCJETS5O9ZioJzfWgTleyfCxDZjDmMuosizC6GWzwqWsceafhBow==}
+  inop@0.7.16:
+    resolution: {integrity: sha512-dPgrP5PAB2//oClK6xK/WBTsMTqq+nHH/tVhcs/i5D7GKgLrDMr/eD5fDxo6+5k5SJpzShlvuqhzp6A32W/ufQ==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -2127,7 +2127,7 @@ snapshots:
 
   imurmurhash@0.1.4: {}
 
-  inop@0.7.15:
+  inop@0.7.16:
     dependencies:
       '@swc/core': 1.13.5
       commander: 13.1.0
