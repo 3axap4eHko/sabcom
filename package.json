@@ -1,6 +1,6 @@
 {
   "name": "sabcom",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "description": "A TypeScript/Node.js library for inter-thread communication using SharedArrayBuffer with atomic operations for raw buffer data transfer",
   "type": "module",
   "types": "build/index.d.ts",
