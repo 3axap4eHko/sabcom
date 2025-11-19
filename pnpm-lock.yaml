@@ -36,8 +36,8 @@ importers:
         specifier: ^9.1.7
         version: 9.1.7
       inop:
-        specifier: ^0.7.41
-        version: 0.7.41
+        specifier: ^0.8.0
+        version: 0.8.0
       prettier:
         specifier: ^3.6.2
         version: 3.6.2
@@ -698,9 +698,9 @@ packages:
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
 
-  commander@13.1.0:
-    resolution: {integrity: sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==}
-    engines: {node: '>=18'}
+  commander@14.0.2:
+    resolution: {integrity: sha512-TywoWNNRbhoD0BXs1P3ZEScW8W5iKrnbithIl0YH+uCmBd0QpPOA8yc82DS3BIE5Ma6FnBVUsJ7wVUDz4dvOWQ==}
+    engines: {node: '>=20'}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -917,8 +917,8 @@ packages:
     resolution: {integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==}
     engines: {node: '>=0.8.19'}
 
-  inop@0.7.41:
-    resolution: {integrity: sha512-Jhve/Amn3/RQIbuGjG+7qkst8teorHAzDsS01gBt3ZDuzhHtwk1TaZzI4dZ39Fqa+EPg+HH2SwLFbNXhggfNzA==}
+  inop@0.8.0:
+    resolution: {integrity: sha512-PvAzljjtIG0fn6cnf169fNXLMIZhJX08dcubkq/YSCXsCtgpei3y/+EsNs8qgf8rffe5wiEgjLCpLIXO/hZRNw==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -1897,7 +1897,7 @@ snapshots:
 
   color-name@1.1.4: {}
 
-  commander@13.1.0: {}
+  commander@14.0.2: {}
 
   concat-map@0.0.1: {}
 
@@ -2128,10 +2128,10 @@ snapshots:
 
   imurmurhash@0.1.4: {}
 
-  inop@0.7.41:
+  inop@0.8.0:
     dependencies:
       '@swc/core': 1.15.2
-      commander: 13.1.0
+      commander: 14.0.2
       fast-glob: 3.3.3
     transitivePeerDependencies:
       - '@swc/helpers'
