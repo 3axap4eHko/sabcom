@@ -31,16 +31,16 @@ importers:
         version: 10.1.8(eslint@9.39.1)
       eslint-plugin-prettier:
         specifier: ^5.5.4
-        version: 5.5.4(eslint-config-prettier@10.1.8(eslint@9.39.1))(eslint@9.39.1)(prettier@3.7.1)
+        version: 5.5.4(eslint-config-prettier@10.1.8(eslint@9.39.1))(eslint@9.39.1)(prettier@3.7.2)
       husky:
         specifier: ^9.1.7
         version: 9.1.7
       inop:
-        specifier: ^0.8.1
-        version: 0.8.1
+        specifier: ^0.8.2
+        version: 0.8.2
       prettier:
-        specifier: ^3.7.1
-        version: 3.7.1
+        specifier: ^3.7.2
+        version: 3.7.2
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
@@ -926,8 +926,8 @@ packages:
     resolution: {integrity: sha512-JmXMZ6wuvDmLiHEml9ykzqO6lwFbof0GG4IkcGaENdCRDDmMVnny7s5HsIgHCbaq0w2MyPhDqkhTUgS2LU2PHA==}
     engines: {node: '>=0.8.19'}
 
-  inop@0.8.1:
-    resolution: {integrity: sha512-zsTOZWGspNCh2UW/HWonZfh1EOn1otD39+st/+Oidy9e8cPp9HjcG6maB2DWxpBLKwguiJqVuuNIxSfOV1eq8A==}
+  inop@0.8.2:
+    resolution: {integrity: sha512-mAi/I4sjQIOASsequctqRpV5KwUuhVI8dDVgW4IY1mdx5am9kpNeA/YcQRFpe/LxSyIUXXfD8vk1L1ct4pti5w==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -1110,8 +1110,8 @@ packages:
     resolution: {integrity: sha512-GbK2cP9nraSSUF9N2XwUwqfzlAFlMNYYl+ShE/V+H8a9uNl/oUqB1w2EL54Jh0OlyRSd8RfWYJ3coVS4TROP2w==}
     engines: {node: '>=6.0.0'}
 
-  prettier@3.7.1:
-    resolution: {integrity: sha512-RWKXE4qB3u5Z6yz7omJkjWwmTfLdcbv44jUVHC5NpfXwFGzvpQM798FGv/6WNK879tc+Cn0AAyherCl1KjbyZQ==}
+  prettier@3.7.2:
+    resolution: {integrity: sha512-n3HV2J6QhItCXndGa3oMWvWFAgN1ibnS7R9mt6iokScBOC0Ul9/iZORmU2IWUMcyAQaMPjTlY3uT34TqocUxMA==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -1973,10 +1973,10 @@ snapshots:
     dependencies:
       eslint: 9.39.1
 
-  eslint-plugin-prettier@5.5.4(eslint-config-prettier@10.1.8(eslint@9.39.1))(eslint@9.39.1)(prettier@3.7.1):
+  eslint-plugin-prettier@5.5.4(eslint-config-prettier@10.1.8(eslint@9.39.1))(eslint@9.39.1)(prettier@3.7.2):
     dependencies:
       eslint: 9.39.1
-      prettier: 3.7.1
+      prettier: 3.7.2
       prettier-linter-helpers: 1.0.0
       synckit: 0.11.8
     optionalDependencies:
@@ -2148,7 +2148,7 @@ snapshots:
 
   imurmurhash@0.1.4: {}
 
-  inop@0.8.1:
+  inop@0.8.2:
     dependencies:
       '@swc/core': 1.15.3
       commander: 14.0.2
@@ -2319,7 +2319,7 @@ snapshots:
     dependencies:
       fast-diff: 1.3.0
 
-  prettier@3.7.1: {}
+  prettier@3.7.2: {}
 
   punycode@2.3.1: {}
 
