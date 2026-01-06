@@ -166,6 +166,24 @@ describe("sabcom test suite", () => {
 
       expect(chunkCount).toBe(expectedChunks);
     });
+
+    it("should throw if buffer byteLength is not a multiple of 4", () => {
+      const buffer = new SharedArrayBuffer(1025);
+      const data = new Uint8Array([1, 2, 3]);
+
+      expect(() => writeGenerator(data, buffer).next()).toThrow(
+        "SharedArrayBuffer byteLength must be a multiple of 4",
+      );
+    });
+
+    it("should throw if buffer is too small for header", () => {
+      const buffer = new SharedArrayBuffer(HEADER_SIZE);
+      const data = new Uint8Array([1, 2, 3]);
+
+      expect(() => writeGenerator(data, buffer).next()).toThrow(
+        "SharedArrayBuffer too small for header",
+      );
+    });
   });
 
   describe("readGenerator", () => {
@@ -296,6 +314,160 @@ describe("sabcom test suite", () => {
       expect(() => gen.next("ok")).toThrow(
         "Reader integrity failure for chunk 0 expected 1",
       );
+    });
+
+    it("should throw if buffer byteLength is not a multiple of 4", () => {
+      const buffer = new SharedArrayBuffer(1025);
+
+      expect(() => readGenerator(buffer).next()).toThrow(
+        "SharedArrayBuffer byteLength must be a multiple of 4",
+      );
+    });
+
+    it("should throw if buffer is too small for header", () => {
+      const buffer = new SharedArrayBuffer(HEADER_SIZE);
+
+      expect(() => readGenerator(buffer).next()).toThrow(
+        "SharedArrayBuffer too small for header",
+      );
+    });
+
+    it("should throw on negative totalSize", () => {
+      const buffer = new SharedArrayBuffer(1024);
+      const header = new Int32Array(buffer);
+
+      const gen = readGenerator(buffer);
+      gen.next();
+
+      header[SEMAPHORE] = Semaphore.HANDSHAKE;
+      header[Handshake.TOTAL_SIZE] = -1;
+      header[Handshake.TOTAL_CHUNKS] = 1;
+
+      expect(() => gen.next("ok")).toThrow("Invalid handshake values");
+    });
+
+    it("should throw on negative totalChunks", () => {
+      const buffer = new SharedArrayBuffer(1024);
+      const header = new Int32Array(buffer);
+
+      const gen = readGenerator(buffer);
+      gen.next();
+
+      header[SEMAPHORE] = Semaphore.HANDSHAKE;
+      header[Handshake.TOTAL_SIZE] = 100;
+      header[Handshake.TOTAL_CHUNKS] = -1;
+
+      expect(() => gen.next("ok")).toThrow("Invalid handshake values");
+    });
+
+    it("should throw when totalSize is zero but totalChunks is not", () => {
+      const buffer = new SharedArrayBuffer(1024);
+      const header = new Int32Array(buffer);
+
+      const gen = readGenerator(buffer);
+      gen.next();
+
+      header[SEMAPHORE] = Semaphore.HANDSHAKE;
+      header[Handshake.TOTAL_SIZE] = 0;
+      header[Handshake.TOTAL_CHUNKS] = 1;
+
+      expect(() => gen.next("ok")).toThrow("Invalid handshake values");
+    });
+
+    it("should throw when totalSize exceeds totalChunks * chunkSize", () => {
+      const buffer = new SharedArrayBuffer(1024);
+      const header = new Int32Array(buffer);
+      const chunkSize = 1024 - HEADER_SIZE;
+
+      const gen = readGenerator(buffer);
+      gen.next();
+
+      header[SEMAPHORE] = Semaphore.HANDSHAKE;
+      header[Handshake.TOTAL_SIZE] = chunkSize * 2 + 1;
+      header[Handshake.TOTAL_CHUNKS] = 2;
+
+      expect(() => gen.next("ok")).toThrow("Invalid handshake values");
+    });
+
+    it("should throw on invalid chunk metadata - negative offset", () => {
+      const buffer = new SharedArrayBuffer(1024);
+      const header = new Int32Array(buffer);
+
+      const gen = readGenerator(buffer);
+      gen.next();
+
+      header[SEMAPHORE] = Semaphore.HANDSHAKE;
+      header[Handshake.TOTAL_SIZE] = 100;
+      header[Handshake.TOTAL_CHUNKS] = 1;
+      gen.next("ok");
+
+      header[SEMAPHORE] = Semaphore.PAYLOAD;
+      header[Header.CHUNK_INDEX] = 0;
+      header[Header.CHUNK_OFFSET] = -1;
+      header[Header.CHUNK_SIZE] = 100;
+
+      expect(() => gen.next("ok")).toThrow("Invalid chunk metadata for chunk 0");
+    });
+
+    it("should throw on invalid chunk metadata - zero size", () => {
+      const buffer = new SharedArrayBuffer(1024);
+      const header = new Int32Array(buffer);
+
+      const gen = readGenerator(buffer);
+      gen.next();
+
+      header[SEMAPHORE] = Semaphore.HANDSHAKE;
+      header[Handshake.TOTAL_SIZE] = 100;
+      header[Handshake.TOTAL_CHUNKS] = 1;
+      gen.next("ok");
+
+      header[SEMAPHORE] = Semaphore.PAYLOAD;
+      header[Header.CHUNK_INDEX] = 0;
+      header[Header.CHUNK_OFFSET] = 0;
+      header[Header.CHUNK_SIZE] = 0;
+
+      expect(() => gen.next("ok")).toThrow("Invalid chunk metadata for chunk 0");
+    });
+
+    it("should throw on invalid chunk metadata - size exceeds chunkSize", () => {
+      const buffer = new SharedArrayBuffer(1024);
+      const header = new Int32Array(buffer);
+      const chunkSize = 1024 - HEADER_SIZE;
+
+      const gen = readGenerator(buffer);
+      gen.next();
+
+      header[SEMAPHORE] = Semaphore.HANDSHAKE;
+      header[Handshake.TOTAL_SIZE] = 100;
+      header[Handshake.TOTAL_CHUNKS] = 1;
+      gen.next("ok");
+
+      header[SEMAPHORE] = Semaphore.PAYLOAD;
+      header[Header.CHUNK_INDEX] = 0;
+      header[Header.CHUNK_OFFSET] = 0;
+      header[Header.CHUNK_SIZE] = chunkSize + 1;
+
+      expect(() => gen.next("ok")).toThrow("Invalid chunk metadata for chunk 0");
+    });
+
+    it("should throw on invalid chunk metadata - offset + size exceeds totalSize", () => {
+      const buffer = new SharedArrayBuffer(1024);
+      const header = new Int32Array(buffer);
+
+      const gen = readGenerator(buffer);
+      gen.next();
+
+      header[SEMAPHORE] = Semaphore.HANDSHAKE;
+      header[Handshake.TOTAL_SIZE] = 100;
+      header[Handshake.TOTAL_CHUNKS] = 1;
+      gen.next("ok");
+
+      header[SEMAPHORE] = Semaphore.PAYLOAD;
+      header[Header.CHUNK_INDEX] = 0;
+      header[Header.CHUNK_OFFSET] = 50;
+      header[Header.CHUNK_SIZE] = 100;
+
+      expect(() => gen.next("ok")).toThrow("Invalid chunk metadata for chunk 0");
     });
   });
 

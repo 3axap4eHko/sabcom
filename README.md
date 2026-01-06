@@ -6,17 +6,17 @@
 [![Coverage Status][codecov-image]][codecov-url]
 [![Snyk][snyk-image]][snyk-url]
 
-A TypeScript/Node.js library for inter-thread communication using SharedArrayBuffer with atomic operations and V8 serialization.
+A TypeScript/Node.js library for high-performance inter-thread communication using `SharedArrayBuffer` with atomic operations. It provides both synchronous and asynchronous APIs to transfer byte data between threads (e.g., Main thread and Worker threads) without the overhead of structured cloning or memory copying.
 
 ## Features
 
-- **Thread-safe communication** using atomic operations
-- **Async and sync APIs** for different use cases
-- **Chunked data transfer** for large payloads
-- **V8 serialization** for complex data types
-- **Timeout handling** with configurable timeouts
-- **Zero-copy operations** where possible
-- **Generator-based** low-level API for custom implementations
+- **Thread-safe communication** using `Atomics` for synchronization.
+- **Async and Sync APIs** to suit different architectural needs.
+- **Chunked Data Transfer** allows sending payloads larger than the buffer size.
+- **Byte-only API** for explicit serialization control.
+- **Configurable Timeouts** to prevent deadlocks.
+- **Generator-based Low-level API** for custom flow control implementations.
+- **Type-safe** with full TypeScript support.
 
 ## Installation
 
@@ -24,171 +24,176 @@ A TypeScript/Node.js library for inter-thread communication using SharedArrayBuf
 npm install sabcom
 ```
 
+## Complete Example
+
+Here is a complete example demonstrating communication between a main thread and a worker thread using Node.js `worker_threads`.
+The `SharedArrayBuffer` is passed once via `workerData` so no `postMessage` is needed for data transfer.
+
+**worker.ts**
+```typescript
+import { workerData } from 'worker_threads';
+import { readSync, writeSync } from 'sabcom';
+
+const buffer = workerData as SharedArrayBuffer;
+
+try {
+  console.log('Worker: Waiting for data...');
+  const receivedData = readSync(buffer);
+  const message = new TextDecoder().decode(receivedData);
+  console.log('Worker: Received message:', message);
+
+  const reply = new TextEncoder().encode(message.toUpperCase());
+  writeSync(reply, buffer);
+} catch (err) {
+  console.error('Worker: Error', err);
+  process.exit(1);
+}
+```
+
+**main.ts**
+```typescript
+import { Worker } from 'worker_threads';
+import { write, read } from 'sabcom';
+import path from 'path';
+
+async function main() {
+  // 1. Create a SharedArrayBuffer (must be multiple of 4)
+  // 4KB buffer
+  const buffer = new SharedArrayBuffer(4096);
+
+  // 2. Start the worker and pass the buffer via workerData
+  const worker = new Worker(path.resolve(__dirname, 'worker.ts'), { workerData: buffer });
+
+  // 3. Prepare data
+  const text = "Hello from the main thread! ".repeat(500); // Larger than buffer
+  const data = new TextEncoder().encode(text);
+
+  console.log(`Main: Sending ${data.byteLength} bytes...`);
+
+  // 4. Write data to the shared buffer
+  // The 'read' operation in the worker will pick this up.
+  await write(data, buffer);
+
+  const reply = await read(buffer);
+  console.log('Main: Reply:', new TextDecoder().decode(reply));
+}
+
+main().catch(console.error);
+```
+
 ## Usage
 
-### Async Example
+### Async API
+Best for non-blocking operations in the main thread or event-loop driven workers.
 
 ```typescript
 import { write, read } from 'sabcom';
 
-// Create a shared buffer (1MB)
-const buffer = new SharedArrayBuffer(1024 * 1024);
-
-// Writer thread (async)
-const data = { message: 'Hello World', numbers: [1, 2, 3, 4, 5] };
+// Writer
 await write(data, buffer);
 
-// Reader thread (async)
-const received = await read(buffer);
-console.log(received); // { message: 'Hello World', numbers: [1, 2, 3, 4, 5] }
+// Reader
+const result = await read(buffer);
 ```
 
-### Sync Example
+### Sync API
+Best for CPU-bound workers where blocking is acceptable or preferred.
 
 ```typescript
 import { writeSync, readSync } from 'sabcom';
 
-// Writer thread (sync)
+// Writer
 writeSync(data, buffer);
 
-// Reader thread (sync)
-const received = readSync(buffer);
+// Reader
+const result = readSync(buffer);
 ```
 
-### With Custom Timeout
+### Options
+
+All functions accept an optional options object:
 
 ```typescript
-// 10 second timeout
-await write(data, buffer, { timeout: 10000 });
-const received = await read(buffer, { timeout: 10000 });
+await write(data, buffer, { 
+  timeout: 10000 // Timeout in milliseconds (default: 5000)
+});
+```
 
-// Sync with timeout
-writeSync(data, buffer, { timeout: 10000 });
-const received = readSync(buffer, { timeout: 10000 });
+## Buffer Sizing & Requirements
+
+1.  **Multiple of 4**: The `byteLength` of the `SharedArrayBuffer` **must** be a multiple of 4 (e.g., 1024, 4096).
+2.  **Header Overhead**: The library uses a small portion of the buffer for a header. The buffer must be larger than `HEADER_SIZE` (exported).
+3.  **Performance Trade-off**:
+    *   **Larger Buffer**: Fewer chunks, less synchronization overhead, faster for large data.
+    *   **Smaller Buffer**: Less memory usage, more context switches/atomic operations.
+    *   **Recommendation**: Start with 4KB - 64KB (`4096` - `65536`) depending on your average payload size.
+
+## Advanced: Generators
+
+If you need fine-grained control over the transfer process (e.g., to implement a progress bar, cancellation, or custom scheduling), you can use the generator functions directly.
+
+```typescript
+import { writeGenerator } from 'sabcom';
+
+const gen = writeGenerator(data, buffer);
+let result = gen.next();
+
+while (!result.done) {
+    // Perform custom logic here (e.g. check for cancellation)
+    
+    // Wait for the reader signal
+    const request = result.value;
+    const waitResult = Atomics.wait(request.target, request.index, request.value, request.timeout);
+    
+    // Resume generator
+    result = gen.next(waitResult);
+}
 ```
 
 ## API Reference
 
-### Async Functions
+### `write(data: Uint8Array, buffer: SharedArrayBuffer, options?: Options): Promise<void>`
+Writes bytes to the buffer. Resolves when the reader has received all data.
 
-#### `write(data: unknown, buffer: SharedArrayBuffer, options?: Options): Promise<void>`
+### `read(buffer: SharedArrayBuffer, options?: Options): Promise<Uint8Array>`
+Waits for and reads bytes from the buffer. Resolves with the complete data.
 
-Asynchronously writes data to the shared buffer using chunked transfer.
+### `writeSync(data: Uint8Array, buffer: SharedArrayBuffer, options?: Options): void`
+Synchronous version of `write`. Blocks until completion.
 
-- `data` - Any serializable data
-- `buffer` - SharedArrayBuffer for communication
-- `options` - Optional configuration object
-  - `timeout` - Timeout in milliseconds (default: 5000)
+### `readSync(buffer: SharedArrayBuffer, options?: Options): Uint8Array`
+Synchronous version of `read`. Blocks until data is received.
 
-**Throws:**
-- `Error` - On handshake or chunk timeout
+## Protocol Details
 
-#### `read(buffer: SharedArrayBuffer, options?: Options): Promise<unknown>`
+The communication follows a strict handshake:
+1.  **Writer** acquires lock, writes metadata (total size, chunk count) -> `HANDSHAKE`.
+2.  **Reader** acknowledges -> `READY`.
+3.  **Writer** writes chunk -> `PAYLOAD`.
+4.  **Reader** reads chunk, acknowledges -> `READY`.
+5.  Repeat 3-4 until done.
 
-Asynchronously reads data from the shared buffer.
+*Note: The `SharedArrayBuffer` is reusable after a successful transfer.*
 
-- `buffer` - SharedArrayBuffer for communication
-- `options` - Optional configuration object
-  - `timeout` - Timeout in milliseconds (default: 5000)
+## Development
 
-**Returns:** Promise resolving to deserialized data
+```bash
+# Install dependencies
+pnpm install
 
-**Throws:**
-- `Error` - On timeout or integrity failure
+# Build
+pnpm build
 
-### Sync Functions
+# Run tests
+pnpm test
 
-#### `writeSync(data: unknown, buffer: SharedArrayBuffer, options?: Options): void`
-
-Synchronously writes data to the shared buffer using chunked transfer.
-
-- `data` - Any serializable data
-- `buffer` - SharedArrayBuffer for communication
-- `options` - Optional configuration object
-  - `timeout` - Timeout in milliseconds (default: 5000)
-
-**Throws:**
-- `Error` - On handshake or chunk timeout
-
-#### `readSync(buffer: SharedArrayBuffer, options?: Options): unknown`
-
-Synchronously reads data from the shared buffer.
-
-- `buffer` - SharedArrayBuffer for communication
-- `options` - Optional configuration object
-  - `timeout` - Timeout in milliseconds (default: 5000)
-
-**Returns:** Deserialized data
-
-**Throws:**
-- `Error` - On timeout or integrity failure
-
-### Low-level Generator Functions
-
-#### `writeGenerator(data: unknown, buffer: SharedArrayBuffer, options?: Options): Generator<WaitRequest, void, WaitResponse>`
-
-Generator function for custom write implementations.
-
-#### `readGenerator(buffer: SharedArrayBuffer, options?: Options): Generator<WaitRequest, unknown, WaitResponse>`
-
-Generator function for custom read implementations.
-
-### Types
-
-```typescript
-interface Options {
-  timeout?: number;
-}
-
-interface WaitRequest {
-  target: Int32Array;
-  index: number;
-  value: number;
-  timeout?: number;
-}
-
-type WaitResponse = ReturnType<typeof Atomics.wait>;
+# Lint
+pnpm lint
 ```
-
-## Protocol
-
-The library uses a header-based protocol with atomic operations:
-
-1. **READY** - Buffer available for new transfer
-2. **HANDSHAKE** - Writer sends total size and chunk count
-3. **PAYLOAD** - Chunked data transfer with integrity checks
-
-### Buffer Layout
-
-```
-[Header: 4 * HEADER_VALUES bytes] [Payload: remaining bytes]
-```
-
-## Error Handling
-
-- **Handshake timeout** - Reader not ready within timeout
-- **Chunk timeout** - Individual chunk transfer timeout
-- **Integrity failure** - Chunk index mismatch
-- **Invalid state** - Unexpected semaphore state
-
-## Thread Safety
-
-- **Async functions** (`write`, `read`) use `Atomics.waitAsync()` for non-blocking operations
-- **Sync functions** (`writeSync`, `readSync`) use `Atomics.wait()` for blocking operations  
-- All functions use `Atomics.store()` and `Atomics.notify()` for synchronization
-- Requires SharedArrayBuffer support and proper threading context
-
-## Requirements
-
-- Node.js with SharedArrayBuffer support
-- Multi-threaded environment (Worker threads, etc.)
-- V8 engine for serialization
-
 
 ## License
 
-License [Apache-2.0](./LICENSE)
-Copyright (c) 2025 Ivan Zakharchanka
+Apache-2.0 © [Ivan Zakharchanka](https://linkedin.com/in/3axap4eHko)
 
 [npm-url]: https://www.npmjs.com/package/sabcom
 [downloads-image]: https://img.shields.io/npm/dw/sabcom.svg?maxAge=43200

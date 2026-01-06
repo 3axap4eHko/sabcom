@@ -34,7 +34,13 @@ export interface WaitRequest {
 export type WaitResponse = ReturnType<typeof Atomics.wait>;
 
 export function* writeGenerator(data: Uint8Array, buffer: SharedArrayBuffer, { timeout = 5000 }: Options = {}): Generator<WaitRequest, void, WaitResponse> {
+  if (buffer.byteLength % Int32Array.BYTES_PER_ELEMENT !== 0) {
+    throw new Error('SharedArrayBuffer byteLength must be a multiple of 4');
+  }
   const chunkSize = buffer.byteLength - HEADER_SIZE;
+  if (chunkSize <= 0) {
+    throw new Error('SharedArrayBuffer too small for header');
+  }
   const totalSize = data.length;
   const totalChunks = Math.ceil(totalSize / chunkSize);
   const header = new Int32Array(buffer);
@@ -79,10 +85,18 @@ export function* writeGenerator(data: Uint8Array, buffer: SharedArrayBuffer, { t
     }
   } finally {
     Atomics.store(header, SEMAPHORE, Semaphore.READY);
+    Atomics.notify(header, SEMAPHORE);
   }
 }
 
 export function* readGenerator(buffer: SharedArrayBuffer, { timeout = 5000 }: Options = {}): Generator<WaitRequest, Uint8Array, WaitResponse> {
+  if (buffer.byteLength % Int32Array.BYTES_PER_ELEMENT !== 0) {
+    throw new Error('SharedArrayBuffer byteLength must be a multiple of 4');
+  }
+  const chunkSize = buffer.byteLength - HEADER_SIZE;
+  if (chunkSize <= 0) {
+    throw new Error('SharedArrayBuffer too small for header');
+  }
   const header = new Int32Array(buffer);
 
   const handshakeResult: WaitResponse = yield {
@@ -100,6 +114,15 @@ export function* readGenerator(buffer: SharedArrayBuffer, { timeout = 5000 }: Op
 
   const totalSize = header[Handshake.TOTAL_SIZE];
   const totalChunks = header[Handshake.TOTAL_CHUNKS];
+  if (totalSize < 0 || totalChunks < 0) {
+    throw new Error('Invalid handshake values');
+  }
+  if (totalSize === 0 && totalChunks !== 0) {
+    throw new Error('Invalid handshake values');
+  }
+  if (totalSize > totalChunks * chunkSize) {
+    throw new Error('Invalid handshake values');
+  }
   const data = new Uint8Array(totalSize);
 
   Atomics.store(header, SEMAPHORE, Semaphore.READY);
@@ -126,6 +149,9 @@ export function* readGenerator(buffer: SharedArrayBuffer, { timeout = 5000 }: Op
     }
     const offset = header[Header.CHUNK_OFFSET];
     const size = header[Header.CHUNK_SIZE];
+    if (offset < 0 || size <= 0 || size > chunkSize || offset + size > totalSize) {
+      throw new Error(`Invalid chunk metadata for chunk ${chunkIndex}`);
+    }
     data.set(payload.subarray(0, size), offset);
     Atomics.store(header, SEMAPHORE, Semaphore.READY);
     Atomics.notify(header, SEMAPHORE);
