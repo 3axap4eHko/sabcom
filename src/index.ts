@@ -159,7 +159,7 @@ export function* readGenerator(buffer: SharedArrayBuffer, { timeout = 5000 }: Op
   return data;
 }
 
-export const writeSync = (data: Uint8Array, buffer: SharedArrayBuffer, options?: Options) => {
+export const writeSync = (data: Uint8Array, buffer: SharedArrayBuffer, options?: Options): void => {
   const gen = writeGenerator(data, buffer, options);
   let result = gen.next();
   while (!result.done) {
@@ -168,7 +168,7 @@ export const writeSync = (data: Uint8Array, buffer: SharedArrayBuffer, options?:
   }
 };
 
-export const write = async (data: Uint8Array, buffer: SharedArrayBuffer, options?: Options) => {
+export const write = async (data: Uint8Array, buffer: SharedArrayBuffer, options?: Options): Promise<void> => {
   const gen = writeGenerator(data, buffer, options);
   let result = gen.next();
   while (!result.done) {
