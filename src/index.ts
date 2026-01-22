@@ -17,10 +17,16 @@ export enum Header {
   CHUNK_SIZE,
 }
 
-export const HEADER_VALUES = 1 + Math.max(Object.values(Handshake).length, Object.values(Header).length) / 2;
+export const HEADER_VALUES = 4;
+
+/**
+ * Size in bytes reserved for protocol header in the SharedArrayBuffer.
+ * The usable payload size is `buffer.byteLength - HEADER_SIZE`.
+ */
 export const HEADER_SIZE = Uint32Array.BYTES_PER_ELEMENT * HEADER_VALUES;
 
 export interface Options {
+  /** Max wait time in milliseconds before timeout error. Default: 5000 */
   timeout?: number;
 }
 
@@ -159,6 +165,26 @@ export function* readGenerator(buffer: SharedArrayBuffer, { timeout = 5000 }: Op
   return data;
 }
 
+/**
+ * Synchronously writes data to a SharedArrayBuffer for cross-thread transfer.
+ * Blocks until the reader receives all data. Use in workers where blocking is acceptable.
+ * @param data - Bytes to send (can be larger than buffer, will be chunked automatically)
+ * @param buffer - SharedArrayBuffer shared with the reader thread (byteLength must be multiple of 4 and larger than HEADER_SIZE)
+ * @param options - Optional configuration
+ * @throws {Error} "SharedArrayBuffer byteLength must be a multiple of 4"
+ * @throws {Error} "SharedArrayBuffer too small for header"
+ * @throws {Error} "Reader handshake timeout" - reader didn't respond in time
+ * @throws {Error} "Reader timeout on chunk N/M" - reader stopped responding mid-transfer
+ * @example
+ * ```typescript
+ * import { workerData } from 'worker_threads';
+ * import { writeSync } from 'sabcom';
+ *
+ * const buffer = workerData as SharedArrayBuffer;
+ * const data = new TextEncoder().encode('Hello from worker');
+ * writeSync(data, buffer);
+ * ```
+ */
 export const writeSync = (data: Uint8Array, buffer: SharedArrayBuffer, options?: Options): void => {
   const gen = writeGenerator(data, buffer, options);
   let result = gen.next();
@@ -168,6 +194,27 @@ export const writeSync = (data: Uint8Array, buffer: SharedArrayBuffer, options?:
   }
 };
 
+/**
+ * Asynchronously writes data to a SharedArrayBuffer for cross-thread transfer.
+ * Non-blocking, suitable for main thread. Resolves when the reader receives all data.
+ * @param data - Bytes to send (can be larger than buffer, will be chunked automatically)
+ * @param buffer - SharedArrayBuffer shared with the reader thread (byteLength must be multiple of 4 and larger than HEADER_SIZE)
+ * @param options - Optional configuration
+ * @throws {Error} "SharedArrayBuffer byteLength must be a multiple of 4"
+ * @throws {Error} "SharedArrayBuffer too small for header"
+ * @throws {Error} "Reader handshake timeout" - reader didn't respond in time
+ * @throws {Error} "Reader timeout on chunk N/M" - reader stopped responding mid-transfer
+ * @example
+ * ```typescript
+ * import { Worker } from 'worker_threads';
+ * import { write } from 'sabcom';
+ *
+ * const buffer = new SharedArrayBuffer(4096);
+ * const worker = new Worker('./worker.js', { workerData: buffer });
+ * const data = new TextEncoder().encode('Hello from main');
+ * await write(data, buffer);
+ * ```
+ */
 export const write = async (data: Uint8Array, buffer: SharedArrayBuffer, options?: Options): Promise<void> => {
   const gen = writeGenerator(data, buffer, options);
   let result = gen.next();
@@ -178,6 +225,27 @@ export const write = async (data: Uint8Array, buffer: SharedArrayBuffer, options
   }
 };
 
+/**
+ * Synchronously reads data from a SharedArrayBuffer written by another thread.
+ * Blocks until all data is received. Use in workers where blocking is acceptable.
+ * @param buffer - SharedArrayBuffer shared with the writer thread (byteLength must be multiple of 4 and larger than HEADER_SIZE)
+ * @param options - Optional configuration
+ * @returns Complete data as Uint8Array
+ * @throws {Error} "SharedArrayBuffer byteLength must be a multiple of 4"
+ * @throws {Error} "SharedArrayBuffer too small for header"
+ * @throws {Error} "Handshake timeout" - writer didn't send data in time
+ * @throws {Error} "Invalid handshake state" - protocol error
+ * @throws {Error} "Writer timeout waiting for chunk N" - writer stopped responding mid-transfer
+ * @example
+ * ```typescript
+ * import { workerData } from 'worker_threads';
+ * import { readSync } from 'sabcom';
+ *
+ * const buffer = workerData as SharedArrayBuffer;
+ * const data = readSync(buffer);
+ * const message = new TextDecoder().decode(data);
+ * ```
+ */
 export const readSync = (buffer: SharedArrayBuffer, options?: Options): Uint8Array => {
   const gen = readGenerator(buffer, options);
   let result = gen.next();
@@ -188,6 +256,29 @@ export const readSync = (buffer: SharedArrayBuffer, options?: Options): Uint8Arr
   return result.value;
 };
 
+/**
+ * Asynchronously reads data from a SharedArrayBuffer written by another thread.
+ * Non-blocking, suitable for main thread. Resolves when all data is received.
+ * @param buffer - SharedArrayBuffer shared with the writer thread (byteLength must be multiple of 4 and larger than HEADER_SIZE)
+ * @param options - Optional configuration
+ * @returns Complete data as Uint8Array
+ * @throws {Error} "SharedArrayBuffer byteLength must be a multiple of 4"
+ * @throws {Error} "SharedArrayBuffer too small for header"
+ * @throws {Error} "Handshake timeout" - writer didn't send data in time
+ * @throws {Error} "Invalid handshake state" - protocol error
+ * @throws {Error} "Writer timeout waiting for chunk N" - writer stopped responding mid-transfer
+ * @example
+ * ```typescript
+ * import { Worker } from 'worker_threads';
+ * import { read } from 'sabcom';
+ *
+ * const buffer = new SharedArrayBuffer(4096);
+ * const worker = new Worker('./worker.js', { workerData: buffer });
+ * // Worker writes data...
+ * const data = await read(buffer);
+ * const message = new TextDecoder().decode(data);
+ * ```
+ */
 export const read = async (buffer: SharedArrayBuffer, options?: Options): Promise<Uint8Array> => {
   const gen = readGenerator(buffer, options);
   let result = gen.next();

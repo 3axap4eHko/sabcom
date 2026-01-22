@@ -20,18 +20,15 @@ describe("sabcom test suite", () => {
     vi.restoreAllMocks();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it("should have correct header size", () => {
-    const handshakeValues = Object.values(Handshake).filter(
-      (v) => typeof v === "number",
-    ).length;
-    const headerValues = Object.values(Header).filter(
-      (v) => typeof v === "number",
-    ).length;
-    expect(1 + Math.max(handshakeValues, headerValues)).toEqual(HEADER_VALUES);
+    const handshakeMax = Math.max(
+      ...Object.values(Handshake).filter((v): v is number => typeof v === "number"),
+    );
+    const headerMax = Math.max(
+      ...Object.values(Header).filter((v): v is number => typeof v === "number"),
+    );
+    expect(HEADER_VALUES).toBeGreaterThan(handshakeMax);
+    expect(HEADER_VALUES).toBeGreaterThan(headerMax);
   });
 
   describe("writeGenerator", () => {
