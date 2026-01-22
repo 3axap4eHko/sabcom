@@ -140,6 +140,100 @@ await write(data, buffer, {
     *   **Smaller Buffer**: Less memory usage, more context switches/atomic operations.
     *   **Recommendation**: Start with 4KB - 64KB (`4096` - `65536`) depending on your average payload size.
 
+## Multi-Worker Architecture
+
+When multiple workers need to communicate with the main thread simultaneously, create a separate `SharedArrayBuffer` for each worker. Each buffer is an independent communication channel.
+
+**main.ts**
+```typescript
+import { Worker } from 'worker_threads';
+import { write, read } from 'sabcom';
+
+interface WorkerChannel {
+  worker: Worker;
+  buffer: SharedArrayBuffer;
+}
+
+async function createWorker(id: number): Promise<WorkerChannel> {
+  const buffer = new SharedArrayBuffer(4096);
+  const worker = new Worker('./worker.js', {
+    workerData: { id, buffer }
+  });
+  return { worker, buffer };
+}
+
+async function main() {
+  // Create multiple workers, each with its own buffer
+  const channels: WorkerChannel[] = await Promise.all([
+    createWorker(0),
+    createWorker(1),
+    createWorker(2),
+  ]);
+
+  // Send data to all workers in parallel
+  const tasks = ['task-a', 'task-b', 'task-c'];
+  await Promise.all(
+    channels.map((ch, i) =>
+      write(new TextEncoder().encode(tasks[i]), ch.buffer)
+    )
+  );
+
+  // Read responses from all workers in parallel
+  const responses = await Promise.all(
+    channels.map(ch => read(ch.buffer))
+  );
+
+  responses.forEach((data, i) => {
+    console.log(`Worker ${i}: ${new TextDecoder().decode(data)}`);
+  });
+
+  // Cleanup
+  await Promise.all(channels.map(ch => ch.worker.terminate()));
+}
+
+main();
+```
+
+**worker.ts**
+```typescript
+import { workerData, parentPort } from 'worker_threads';
+import { readSync, writeSync } from 'sabcom';
+
+const { id, buffer } = workerData as { id: number; buffer: SharedArrayBuffer };
+
+// Receive task from main
+const task = new TextDecoder().decode(readSync(buffer));
+console.log(`Worker ${id} received: ${task}`);
+
+// Process and respond
+const result = `${task.toUpperCase()}-done`;
+writeSync(new TextEncoder().encode(result), buffer);
+```
+
+### Key Points for Multi-Worker Setup
+
+1. **One buffer per worker** - Each worker needs its own `SharedArrayBuffer`. A single buffer can only handle one reader-writer pair at a time.
+
+2. **Buffer ownership** - Each buffer represents a bidirectional channel between main thread and one worker. Don't share a buffer between multiple workers.
+
+3. **Parallel operations** - Use `Promise.all()` with async API (`write`/`read`) to communicate with multiple workers concurrently.
+
+4. **Buffer pool pattern** - For dynamic worker counts, maintain a pool of buffers:
+
+```typescript
+class BufferPool {
+  private available: SharedArrayBuffer[] = [];
+
+  acquire(size = 4096): SharedArrayBuffer {
+    return this.available.pop() ?? new SharedArrayBuffer(size);
+  }
+
+  release(buffer: SharedArrayBuffer): void {
+    this.available.push(buffer);
+  }
+}
+```
+
 ## Advanced: Generators
 
 If you need fine-grained control over the transfer process (e.g., to implement a progress bar, cancellation, or custom scheduling), you can use the generator functions directly.
