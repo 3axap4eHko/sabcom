@@ -8,6 +8,18 @@
 
 A TypeScript/Node.js library for high-performance inter-thread communication using `SharedArrayBuffer` with atomic operations. It provides both synchronous and asynchronous APIs to transfer byte data between threads (e.g., Main thread and Worker threads) without the overhead of structured cloning or memory copying.
 
+## What sabcom Does
+
+sabcom is a **protocol layer** for SharedArrayBuffer. It handles:
+- Synchronization between reader and writer via Atomics
+- Chunking large data that exceeds buffer size
+- Timeout detection to prevent deadlocks
+
+sabcom does **NOT**:
+- Create worker threads (you create them with `worker_threads` or `new Worker()`)
+- Transfer the SharedArrayBuffer between threads (you pass it via `workerData` or `postMessage`)
+- Serialize data (you encode to `Uint8Array` before calling write, e.g., with `TextEncoder` or `JSON.stringify`)
+
 ## Features
 
 - **Thread-safe communication** using `Atomics` for synchronization.
@@ -174,6 +186,85 @@ The communication follows a strict handshake:
 5.  Repeat 3-4 until done.
 
 *Note: The `SharedArrayBuffer` is reusable after a successful transfer.*
+
+## FAQ
+
+### What is the minimum buffer size?
+
+`HEADER_SIZE` is 16 bytes. Your buffer must be larger to have usable payload space:
+
+```typescript
+import { HEADER_SIZE } from 'sabcom';
+
+// Minimum: HEADER_SIZE + at least 1 byte for payload
+// Practical minimum: 1024 bytes (1KB)
+const buffer = new SharedArrayBuffer(1024);
+```
+
+### How do I send JSON or objects?
+
+sabcom transfers raw bytes only. Serialize before sending:
+
+```typescript
+// Writer
+const obj = { hello: 'world', count: 42 };
+const json = JSON.stringify(obj);
+await write(new TextEncoder().encode(json), buffer);
+
+// Reader
+const data = await read(buffer);
+const obj = JSON.parse(new TextDecoder().decode(data));
+```
+
+### Does sabcom work in browsers?
+
+Yes, with Web Workers. However, `SharedArrayBuffer` requires cross-origin isolation headers on your server:
+
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+### How do I handle errors?
+
+```typescript
+try {
+  await write(data, buffer, { timeout: 5000 });
+} catch (err) {
+  if (err.message.includes('timeout')) {
+    console.error('Reader did not respond in time');
+  }
+}
+```
+
+### Can I cancel a transfer mid-way?
+
+Use generators with `for...of` - breaking out automatically triggers cleanup:
+
+```typescript
+const gen = writeGenerator(data, buffer);
+for (const request of gen) {
+  if (shouldCancel) break; // finally block resets buffer to READY
+  const result = Atomics.wait(request.target, request.index, request.value, request.timeout);
+  if (result === 'timed-out') break;
+}
+```
+
+### Can I reuse the buffer after a transfer?
+
+Yes. After a successful transfer (or error), the buffer resets to `READY` state and can be used again:
+
+```typescript
+const buffer = new SharedArrayBuffer(4096);
+
+// First transfer
+await write(data1, buffer);
+const result1 = await read(buffer);
+
+// Second transfer - same buffer
+await write(data2, buffer);
+const result2 = await read(buffer);
+```
 
 ## Development
 

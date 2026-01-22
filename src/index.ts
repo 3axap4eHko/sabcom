@@ -30,15 +30,47 @@ export interface Options {
   timeout?: number;
 }
 
+/**
+ * Request yielded by generator functions for Atomics.wait/waitAsync.
+ * Pass to Atomics.wait() for sync or Atomics.waitAsync() for async waiting.
+ */
 export interface WaitRequest {
+  /** Int32Array view of the SharedArrayBuffer header */
   target: Int32Array;
+  /** Index in the array to wait on (always SEMAPHORE = 0) */
   index: number;
+  /** Value to compare against before waiting */
   value: number;
+  /** Timeout in milliseconds */
   timeout?: number;
 }
 
 export type WaitResponse = ReturnType<typeof Atomics.wait>;
 
+/**
+ * Low-level generator for writing data with custom flow control.
+ * Use for progress tracking, cancellation, or custom scheduling.
+ * @param data - Bytes to send (can be larger than buffer, will be chunked automatically)
+ * @param buffer - SharedArrayBuffer shared with the reader thread (byteLength must be multiple of 4 and larger than HEADER_SIZE)
+ * @param options - Optional configuration
+ * @yields {WaitRequest} Request to wait for reader acknowledgment
+ * @throws {Error} "SharedArrayBuffer byteLength must be a multiple of 4"
+ * @throws {Error} "SharedArrayBuffer too small for header"
+ * @throws {Error} "Reader handshake timeout" - reader didn't respond in time
+ * @throws {Error} "Reader timeout on chunk N/M" - reader stopped responding mid-transfer
+ * @example
+ * ```typescript
+ * import { writeGenerator } from 'sabcom';
+ *
+ * const gen = writeGenerator(data, buffer);
+ * let chunks = 0;
+ * for (const request of gen) {
+ *   const result = Atomics.wait(request.target, request.index, request.value, request.timeout);
+ *   if (result === 'timed-out') throw new Error('Timeout');
+ *   console.log(`Chunk ${++chunks} sent`);
+ * }
+ * ```
+ */
 export function* writeGenerator(data: Uint8Array, buffer: SharedArrayBuffer, { timeout = 5000 }: Options = {}): Generator<WaitRequest, void, WaitResponse> {
   if (buffer.byteLength % Int32Array.BYTES_PER_ELEMENT !== 0) {
     throw new Error('SharedArrayBuffer byteLength must be a multiple of 4');
@@ -95,6 +127,31 @@ export function* writeGenerator(data: Uint8Array, buffer: SharedArrayBuffer, { t
   }
 }
 
+/**
+ * Low-level generator for reading data with custom flow control.
+ * Use for progress tracking, cancellation, or custom scheduling.
+ * @param buffer - SharedArrayBuffer shared with the writer thread (byteLength must be multiple of 4 and larger than HEADER_SIZE)
+ * @param options - Optional configuration
+ * @yields {WaitRequest} Request to wait for writer data
+ * @returns Complete data as Uint8Array
+ * @throws {Error} "SharedArrayBuffer byteLength must be a multiple of 4"
+ * @throws {Error} "SharedArrayBuffer too small for header"
+ * @throws {Error} "Handshake timeout" - writer didn't send data in time
+ * @throws {Error} "Invalid handshake state" - protocol error
+ * @throws {Error} "Writer timeout waiting for chunk N" - writer stopped responding mid-transfer
+ * @example
+ * ```typescript
+ * import { readGenerator } from 'sabcom';
+ *
+ * const gen = readGenerator(buffer);
+ * let result = gen.next();
+ * while (!result.done) {
+ *   const waitResult = Atomics.wait(result.value.target, result.value.index, result.value.value, result.value.timeout);
+ *   result = gen.next(waitResult);
+ * }
+ * const data = result.value; // Uint8Array
+ * ```
+ */
 export function* readGenerator(buffer: SharedArrayBuffer, { timeout = 5000 }: Options = {}): Generator<WaitRequest, Uint8Array, WaitResponse> {
   if (buffer.byteLength % Int32Array.BYTES_PER_ELEMENT !== 0) {
     throw new Error('SharedArrayBuffer byteLength must be a multiple of 4');
