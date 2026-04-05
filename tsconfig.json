@@ -8,9 +8,11 @@
     "allowJs": true,
     "moduleResolution": "NodeNext",
     "lib": ["ESNext"],
+    "types": ["node"],
     "rootDir": "src",
-    "outDir": "build"
+    "outDir": "build",
+    "skipLibCheck": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "**/__tests__", "**/*.tmp.ts"]
+  "exclude": ["node_modules", "**/__tests__", "**/__bench__", "**/*.tmp.ts"]
 }

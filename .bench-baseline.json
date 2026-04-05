@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "timestamp": "2026-04-02T15:54:30.634Z",
+  "results": {
+    "sabcom/round-trip/64B": {
+      "ops": 338754,
+      "heapUsedKB": 224,
+      "dceWarning": false
+    },
+    "sabcom/round-trip/256B": {
+      "ops": 313891,
+      "heapUsedKB": 0,
+      "dceWarning": false
+    },
+    "sabcom/round-trip/1KB": {
+      "ops": 266952,
+      "heapUsedKB": 862,
+      "dceWarning": false
+    },
+    "sabcom/round-trip/4KB": {
+      "ops": 180596,
+      "heapUsedKB": 1069,
+      "dceWarning": false
+    },
+    "sabcom/round-trip/16KB": {
+      "ops": 76755,
+      "heapUsedKB": 139,
+      "dceWarning": false
+    },
+    "clone/round-trip/64B": {
+      "ops": 185017,
+      "heapUsedKB": 0,
+      "dceWarning": false
+    },
+    "clone/round-trip/256B": {
+      "ops": 173675,
+      "heapUsedKB": 513,
+      "dceWarning": false
+    },
+    "clone/round-trip/1KB": {
+      "ops": 167302,
+      "heapUsedKB": 0,
+      "dceWarning": false
+    },
+    "clone/round-trip/4KB": {
+      "ops": 151489,
+      "heapUsedKB": 0,
+      "dceWarning": false
+    },
+    "clone/round-trip/16KB": {
+      "ops": 120108,
+      "heapUsedKB": 0,
+      "dceWarning": false
+    },
+    "transfer/round-trip/64B": {
+      "ops": 151111,
+      "heapUsedKB": 759,
+      "dceWarning": false
+    },
+    "transfer/round-trip/256B": {
+      "ops": 140275,
+      "heapUsedKB": 0,
+      "dceWarning": false
+    },
+    "transfer/round-trip/1KB": {
+      "ops": 141280,
+      "heapUsedKB": 178,
+      "dceWarning": false
+    },
+    "transfer/round-trip/4KB": {
+      "ops": 134565,
+      "heapUsedKB": 169,
+      "dceWarning": false
+    },
+    "transfer/round-trip/16KB": {
+      "ops": 110921,
+      "heapUsedKB": 0,
+      "dceWarning": false
+    }
+  }
+}

@@ -12,6 +12,7 @@ export default tseslint.config(
     '**/scripts',
     '**/*.tmp.ts',
     '**/__tests__/*',
+    '**/__bench__/*',
     '**/*.js',
     '**/*.cjs',
     '**/*.mjs',
