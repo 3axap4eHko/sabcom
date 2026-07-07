@@ -2,26 +2,26 @@ allowBuilds:
   '@swc/core': true
 minimumReleaseAgeExclude:
   - '@types/node@25.9.0'
-  - '@typescript-eslint/eslint-plugin@8.59.4 || 8.62.1'
-  - '@typescript-eslint/parser@8.59.4 || 8.62.1'
-  - '@typescript-eslint/project-service@8.59.4 || 8.62.1'
-  - '@typescript-eslint/scope-manager@8.59.4 || 8.62.1'
-  - '@typescript-eslint/tsconfig-utils@8.59.4 || 8.62.1'
-  - '@typescript-eslint/type-utils@8.59.4 || 8.62.1'
-  - '@typescript-eslint/types@8.59.4 || 8.62.1'
-  - '@typescript-eslint/typescript-estree@8.59.4 || 8.62.1'
-  - '@typescript-eslint/utils@8.59.4 || 8.62.1'
-  - '@typescript-eslint/visitor-keys@8.59.4 || 8.62.1'
-  - typescript-eslint@8.59.4 || 8.62.1
-  - '@vitest/coverage-v8@4.1.7'
-  - '@vitest/expect@4.1.7'
-  - '@vitest/mocker@4.1.7'
-  - '@vitest/pretty-format@4.1.7'
-  - '@vitest/runner@4.1.7'
-  - '@vitest/snapshot@4.1.7'
-  - '@vitest/spy@4.1.7'
-  - '@vitest/utils@4.1.7'
-  - vitest@4.1.7
+  - '@typescript-eslint/eslint-plugin@8.59.4 || 8.62.1 || 8.63.0'
+  - '@typescript-eslint/parser@8.59.4 || 8.62.1 || 8.63.0'
+  - '@typescript-eslint/project-service@8.59.4 || 8.62.1 || 8.63.0'
+  - '@typescript-eslint/scope-manager@8.59.4 || 8.62.1 || 8.63.0'
+  - '@typescript-eslint/tsconfig-utils@8.59.4 || 8.62.1 || 8.63.0'
+  - '@typescript-eslint/type-utils@8.59.4 || 8.62.1 || 8.63.0'
+  - '@typescript-eslint/types@8.59.4 || 8.62.1 || 8.63.0'
+  - '@typescript-eslint/typescript-estree@8.59.4 || 8.62.1 || 8.63.0'
+  - '@typescript-eslint/utils@8.59.4 || 8.62.1 || 8.63.0'
+  - '@typescript-eslint/visitor-keys@8.59.4 || 8.62.1 || 8.63.0'
+  - typescript-eslint@8.59.4 || 8.62.1 || 8.63.0
+  - '@vitest/coverage-v8@4.1.7 || 4.1.10'
+  - '@vitest/expect@4.1.7 || 4.1.10'
+  - '@vitest/mocker@4.1.7 || 4.1.10'
+  - '@vitest/pretty-format@4.1.7 || 4.1.10'
+  - '@vitest/runner@4.1.7 || 4.1.10'
+  - '@vitest/snapshot@4.1.7 || 4.1.10'
+  - '@vitest/spy@4.1.7 || 4.1.10'
+  - '@vitest/utils@4.1.7 || 4.1.10'
+  - vitest@4.1.7 || 4.1.10
   - '@pkgr/core@0.3.6'
   - eslint-plugin-prettier@5.5.6
   - synckit@0.11.13
