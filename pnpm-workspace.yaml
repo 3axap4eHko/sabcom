@@ -1,7 +1,7 @@
 allowBuilds:
   '@swc/core': true
 minimumReleaseAgeExclude:
-  - '@types/node@25.9.0'
+  - '@types/node@25.9.0 || 25.9.5'
   - '@typescript-eslint/eslint-plugin@8.59.4 || 8.62.1 || 8.63.0'
   - '@typescript-eslint/parser@8.59.4 || 8.62.1 || 8.63.0'
   - '@typescript-eslint/project-service@8.59.4 || 8.62.1 || 8.63.0'
