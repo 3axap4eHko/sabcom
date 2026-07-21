@@ -2,17 +2,17 @@ allowBuilds:
   '@swc/core': true
 minimumReleaseAgeExclude:
   - '@types/node@25.9.0 || 25.9.5'
-  - '@typescript-eslint/eslint-plugin@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0'
-  - '@typescript-eslint/parser@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0'
-  - '@typescript-eslint/project-service@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0'
-  - '@typescript-eslint/scope-manager@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0'
-  - '@typescript-eslint/tsconfig-utils@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0'
-  - '@typescript-eslint/type-utils@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0'
-  - '@typescript-eslint/types@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0'
-  - '@typescript-eslint/typescript-estree@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0'
-  - '@typescript-eslint/utils@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0'
-  - '@typescript-eslint/visitor-keys@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0'
-  - typescript-eslint@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0
+  - '@typescript-eslint/eslint-plugin@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0 || 8.65.0'
+  - '@typescript-eslint/parser@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0 || 8.65.0'
+  - '@typescript-eslint/project-service@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0 || 8.65.0'
+  - '@typescript-eslint/scope-manager@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0 || 8.65.0'
+  - '@typescript-eslint/tsconfig-utils@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0 || 8.65.0'
+  - '@typescript-eslint/type-utils@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0 || 8.65.0'
+  - '@typescript-eslint/types@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0 || 8.65.0'
+  - '@typescript-eslint/typescript-estree@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0 || 8.65.0'
+  - '@typescript-eslint/utils@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0 || 8.65.0'
+  - '@typescript-eslint/visitor-keys@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0 || 8.65.0'
+  - typescript-eslint@8.59.4 || 8.62.1 || 8.63.0 || 8.64.0 || 8.65.0
   - '@vitest/coverage-v8@4.1.7 || 4.1.10'
   - '@vitest/expect@4.1.7 || 4.1.10'
   - '@vitest/mocker@4.1.7 || 4.1.10'
